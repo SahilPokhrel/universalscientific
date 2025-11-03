@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+// 1. We will NOT use ScrollRestoration
+import { NavLink, Outlet, useLocation } from "react-router-dom"; 
 import {
   Home,
   ShoppingBag,
@@ -8,10 +9,9 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import Logo from './assets/logo-nav.png'; // Using your logo
 
-import Logo from './assets/logo.png';
 
-// Define nav items for the router
 const navItems = [
   { path: "/", label: "Home", icon: Home },
   { path: "/products", label: "Products", icon: ShoppingBag },
@@ -19,33 +19,43 @@ const navItems = [
   { path: "/contact", label: "Contact", icon: Mail },
 ];
 
-const contactDetails = {
-  address:
-    "55 Pillar House, Harijan Dairy, Upper Mawprem, Shillong - 793002, Meghalaya",
-};
-
-// This is now your main Layout component
+// Main App Layout Component
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const location = useLocation();
+  const { pathname } = useLocation();
 
-  // This useEffect hook updates the browser tab title
+  // 2. --- THIS IS THE FIX ---
+  // This effect runs every time the page URL (pathname) changes.
   useEffect(() => {
-    const currentNavItem = navItems.find((item) => item.path === location.pathname);
-    // Default to "Home" if no match (e.g., for the root path)
+    // We use a setTimeout with a 0ms delay.
+    // This pushes the scroll-to-top command to the end of the
+    // browser's 'to-do' list, *after* React has rendered the new page.
+    const timer = setTimeout(() => {
+      window.scrollTo(0, 0);
+    }, 0);
+
+    // Clean up the timer
+    return () => clearTimeout(timer);
+  }, [pathname]); // This effect depends on the pathname
+
+  // This effect updates the browser tab title (This one stays)
+  useEffect(() => {
+    const currentNavItem = navItems.find((item) => item.path === pathname);
     const pageTitle = currentNavItem ? currentNavItem.label : "Home";
     document.title = `${pageTitle} | Universal Scientific & Stationery`;
-
-    // Close mobile menu on page change
-    setMenuOpen(false);
-  }, [location.pathname]); // This effect re-runs every time the URL changes
+  }, [pathname]);
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* 3. <ScrollRestoration /> has been REMOVED */}
+
       <header className="bg-white shadow-md sticky top-0 z-50">
         <nav className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
           
-          <NavLink to="/" className="flex items-center space-x-3 focus:outline-none">
+          <NavLink
+            to="/"
+            className="flex items-center space-x-3 focus:outline-none"
+          >
             <img 
               src={Logo}
               alt="Universal Scientific Logo" 
@@ -56,14 +66,13 @@ export default function App() {
             </span>
           </NavLink>
           
-          {/* Desktop Nav - Now uses NavLink */}
+          {/* Desktop Nav */}
           <div className="hidden md:flex space-x-8">
             {navItems.map((item) => (
               <NavLink
-                key={item.path}
+                key={item.label}
                 to={item.path}
-                // This 'end' prop is important for the Home link
-                end={item.path === "/"} 
+                // Check if the link is active
                 className={({ isActive }) =>
                   `flex items-center gap-2 text-lg font-medium ${
                     isActive
@@ -78,7 +87,7 @@ export default function App() {
             ))}
           </div>
           
-          {/* Mobile menu button */}
+          {/* Mobile menu */}
           <button
             className="md:hidden text-gray-700"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -87,14 +96,13 @@ export default function App() {
           </button>
         </nav>
         
-        {/* Mobile menu dropdown - Now uses NavLink */}
+        {/* Mobile menu dropdown */}
         {menuOpen && (
           <div className="md:hidden bg-gray-50 border-t border-gray-200 flex flex-col">
             {navItems.map((item) => (
               <NavLink
-                key={item.path}
+                key={item.label}
                 to={item.path}
-                end={item.path === "/"}
                 onClick={() => setMenuOpen(false)} // Close menu on click
                 className={({ isActive }) =>
                   `px-6 py-3 text-left ${
@@ -111,17 +119,20 @@ export default function App() {
         )}
       </header>
 
-      {/* This Outlet is where the router will render your pages */}
+      {/* This Outlet renders the current page (HomePage, ProductsPage, etc.) */}
       <main className="flex-grow bg-gray-50">
-        <Outlet />
+        <Outlet /> 
       </main>
 
+      {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-8 text-center">
         <p>
           © {new Date().getFullYear()} Universal Scientific & Stationery — All
           rights reserved.
         </p>
-        <p className="text-sm mt-2">{contactDetails.address}</p>
+        <p className="text-sm mt-2">
+          55 Pillar House, Harijan Dairy, Upper Mawprem, Shillong - 793002, Meghalaya
+        </p>
       </footer>
     </div>
   );
