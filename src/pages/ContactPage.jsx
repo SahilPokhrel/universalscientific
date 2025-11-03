@@ -51,7 +51,7 @@ export default function ContactPage() {
           </h3>
           <form
             onSubmit={handleSubmit}
-            action="https://formspree.io/f/mldoznno" // 1. Updated with your correct URL
+            action="https://formspree.io/f/xrbovnqp" // 1. Updated with your correct URL
             method="POST"
             className="space-y-4"
           >
